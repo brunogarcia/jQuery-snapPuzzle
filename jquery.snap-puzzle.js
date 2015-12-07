@@ -7,7 +7,8 @@
 
 (function($){
     $.fn.snapPuzzle = function(options){
-        var o = $.extend({ pile: '', containment: 'document', rows: 5, columns: 5, onComplete: function(){} }, options);
+        var o = $.extend({ pile: '', randomly: true, containment: 'document', rows: 5, columns: 5, onComplete: function(){} }, options);
+        positions = [];
 
         // public methods
         if (typeof options == 'string') {
@@ -27,6 +28,9 @@
                     that.unwrap().removeData('options');
                     pile.removeClass('snappuzzle-pile');
                 } else if (options == 'refresh') {
+                    if (!randomly) {
+                      createPositions({'pieceWidth': pieceWidth, 'pieceHeight': pieceHeight, 'columns': o.columns, 'rows': o.rows});
+                    }
                     $('.snappuzzle-slot.'+o.puzzle_class).each(function(){
                         var x_y = $(this).data('pos').split('_'), x = x_y[0], y = x_y[1];
                         $(this).css({
@@ -37,6 +41,7 @@
                         });
                     });
                     $('.snappuzzle-piece.'+o.puzzle_class).each(function(){
+                        var position = getPosition({'maxX': maxX, 'maxY': maxY});
                         if ($(this).data('slot')) {
                             // placed on slot
                             var x_y = $(this).data('slot').split('_'), slot_x = x_y[0], slot_y = x_y[1],
@@ -55,8 +60,8 @@
                             $(this).css({
                                 width: pieceWidth,
                                 height: pieceHeight,
-                                left: Math.floor((Math.random()*(maxX+1))),
-                                top: Math.floor((Math.random()*(maxY+1))),
+                                left: position.left,
+                                top: position.top,
                                 backgroundPosition: (-y*pieceWidth)+'px '+(-x*pieceHeight)+'px',
                                 backgroundSize: that.width()
                             });
@@ -76,18 +81,24 @@
                 pile = $(o.pile).addClass('snappuzzle-pile'),
                 maxX = pile.width() - pieceWidth,
                 maxY = pile.height() - pieceHeight;
+                randomly = o.randomly;
 
             o.puzzle_class = puzzle_class;
             that.data('options', o);
 
+            if (!randomly) {
+              createPositions({'pieceWidth': pieceWidth, 'pieceHeight': pieceHeight, 'columns': o.columns, 'rows': o.rows});
+            }
+
             for (var x=0; x<o.rows; x++) {
                 for (var y=0; y<o.columns; y++) {
+                    var position = getPosition({'maxX': maxX, 'maxY': maxY});
                     $('<div class="snappuzzle-piece '+puzzle_class+'"/>').data('pos', x+'_'+y).css({
                         width: pieceWidth,
                         height: pieceHeight,
                         position: 'absolute',
-                        left: Math.floor((Math.random()*(maxX+1))),
-                        top: Math.floor((Math.random()*(maxY+1))),
+                        left: position.left,
+                        top: position.top,
                         zIndex: Math.floor((Math.random()*10)+1),
                         backgroundImage: 'url('+src+')',
                         backgroundPosition: (-y*pieceWidth)+'px '+(-x*pieceHeight)+'px',
@@ -129,6 +140,44 @@
                     });
                 }
             }
+        }
+
+        // if i wanna a nice grid of pieces instead of randomly scattered
+        // https://github.com/Pixabay/jQuery-snapPuzzle/issues/1
+        function createPositions(options) {
+          for (var x=0; x < options.rows; x++) {
+              for (var y=0; y < options.columns; y++) {
+                positions.push({'left': y*options.pieceWidth, 'top': x*options.pieceHeight});
+              }
+          }
+        }
+
+        function getPosition(options) {
+          var position;
+          if (randomly) {
+            position = {
+              left: Math.floor((Math.random()*(options.maxX + 1))),
+              top: Math.floor((Math.random()*(options.maxY + 1)))
+            }
+          } else {
+            position = getRandomPosition(positions.length);
+          }
+          return position;
+        }
+
+        function getRandomPosition(total) {
+          var random = getRandomInt(total);
+          var result = positions[random];
+          if (random > -1) {
+            positions.splice(random, 1);
+          }
+          return result;
+        }
+
+        function getRandomInt(total) {
+          var min = 0;
+          var max = total - 1;
+          return Math.floor(Math.random() * (max - min + 1)) + min;
         }
 
         return this.each(function(){
