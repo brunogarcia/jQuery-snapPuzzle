@@ -22,6 +22,10 @@ https://goodies.pixabay.com/jquery/snap-puzzle/demo.html
 
 ## Changelog
 
+### Version 1.0.1 - 2015/12/07
+
+* Added a "randomly=false" option for create a nice grid of pieces instead of randomly scattered.
+
 ### Version 1.0.0 - 2014/12/17
 
 * Initial release
